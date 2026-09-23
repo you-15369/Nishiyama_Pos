@@ -1,0 +1,149 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "POS: セットアップ（初回のみ）",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\scripts\\setup.ps1"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "POS: API 起動",
+      "type": "process",
+      "command": "${workspaceFolder}\\api\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "uvicorn",
+        "app.main:app",
+        "--reload",
+        "--port",
+        "8000"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}\\api"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "pos-api",
+        "pattern": {
+          "regexp": "^__never__$"
+        },
+        "background": {
+          "activeBegins": true,
+          "beginsPattern": "Will watch for changes|Started reloader",
+          "endsPattern": "Application startup complete|Uvicorn running"
+        }
+      },
+      "presentation": {
+        "panel": "dedicated",
+        "group": "pos"
+      }
+    },
+    {
+      "label": "POS: Web 起動",
+      "type": "shell",
+      "command": "npm.cmd",
+      "args": [
+        "run",
+        "dev"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}\\web",
+        "shell": {
+          "executable": "cmd.exe",
+          "args": [
+            "/d",
+            "/c"
+          ]
+        }
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "pos-web",
+        "pattern": {
+          "regexp": "^__never__$"
+        },
+        "background": {
+          "activeBegins": true,
+          "beginsPattern": "next dev|Next\\.js",
+          "endsPattern": "Ready in"
+        }
+      },
+      "presentation": {
+        "panel": "dedicated",
+        "group": "pos"
+      }
+    },
+    {
+      "label": "POS: すべて起動",
+      "dependsOn": [
+        "POS: API 起動",
+        "POS: Web 起動"
+      ],
+      "dependsOrder": "parallel",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "POS: 初期データを入れ直す",
+      "type": "process",
+      "command": "${workspaceFolder}\\api\\.venv\\Scripts\\python.exe",
+      "args": [
+        "seed.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}\\api"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "POS: テスト（API）",
+      "type": "process",
+      "command": "${workspaceFolder}\\api\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "pytest"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}\\api"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "POS: テスト（Web）",
+      "type": "shell",
+      "command": "npm.cmd",
+      "args": [
+        "test"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}\\web",
+        "shell": {
+          "executable": "cmd.exe",
+          "args": [
+            "/d",
+            "/c"
+          ]
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}

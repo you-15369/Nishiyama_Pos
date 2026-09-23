@@ -1,0 +1,42 @@
+# ローカルで一式（MySQL + FastAPI + Next.js）を起動する
+#   docker compose up -d --build
+#   docker compose exec api alembic upgrade head
+#   docker compose exec api python seed.py
+#   → http://localhost:3000
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: pos
+      MYSQL_USER: pos
+      MYSQL_PASSWORD: pos-local-password
+      MYSQL_ROOT_PASSWORD: root-local-password
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci"]
+    ports: ["3306:3306"]
+    volumes: [dbdata:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot-local-password"]
+      interval: 5s
+      retries: 20
+
+  api:
+    build: ./api
+    environment:
+      APP_ENV: dev
+      DATABASE_URL: mysql+pymysql://pos:pos-local-password@db:3306/pos?charset=utf8mb4
+      CORS_ORIGINS: http://localhost:3000
+      JWT_SECRET: local-dev-secret-change-me-0123456789abcdef
+    depends_on:
+      db: { condition: service_healthy }
+    ports: ["8000:8000"]
+
+  web:
+    build: ./web
+    environment:
+      API_BASE_URL: http://api:8000
+      COOKIE_SECURE: "false"
+    depends_on: [api]
+    ports: ["3000:3000"]
+
+volumes:
+  dbdata:
