@@ -19,8 +19,8 @@ OCHA = ProductInfo("4901234567895", "お茶", 130, "reduced")
 PEN = ProductInfo("4909999999999", "ボールペン", 200, "standard")
 P300 = ProductInfo("4900000000300", "対象商品300", 300, "standard")
 PRODUCTS = {p.product_code: p for p in (ONIGIRI, OCHA, PEN, P300)}
-PROMO_ONIGIRI_10 = PromotionInfo(ONIGIRI.product_code, "rate", 10, True)
-PROMO_300_500 = PromotionInfo(P300.product_code, "amount", 500, True)
+PROMO_ONIGIRI_10 = PromotionInfo(ONIGIRI.product_code, "rate", 10)
+PROMO_300_500 = PromotionInfo(P300.product_code, "amount", 500)
 
 
 def test_quote_mixed_tax():  # UT-BE-01
@@ -130,3 +130,11 @@ def test_find_member(db):  # UT-BE-11
     repo = MemberRepository(db)
     assert repo.find("M0001").name == "テスト太郎"
     assert repo.find("M9999") is None
+
+
+def test_amount_discount_member_only():  # 金額値引きも会員に限る
+    promo = PromotionInfo(PEN.product_code, "amount", 20)
+    member = compute_quote([(PEN.product_code, 2)], PRODUCTS, RATES, [promo], "M0001")
+    assert member.total_discount == 40 and member.lines[0].subtotal == 360
+    guest = compute_quote([(PEN.product_code, 2)], PRODUCTS, RATES, [promo], None)
+    assert guest.total_discount == 0 and guest.lines[0].subtotal == 400

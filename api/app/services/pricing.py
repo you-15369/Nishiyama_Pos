@@ -1,7 +1,8 @@
 """PricingService：金額・値引き・税の計算をここに集約する（NFR-012）。
 
 ルール
-- 値引きは「会員かつ企画対象」（members_only=False の企画は全員）に、1個あたりで適用する。
+- 値引きは会員に限り、企画対象の商品・期間内のときだけ、1個あたりで適用する（R-011, FR-007）。
+  会員でない会計（member_id=null）には値引きを一切適用しない。
   - 割合: floor(単価 × 率 / 100)
   - 金額: min(値引き額, 単価)  ← 単価で頭打ちにしてマイナスにしない（UT-BE-04）
   - 同じ商品に複数の企画がある場合は、1個あたり値引きが最大のものを1つだけ使う
@@ -37,7 +38,6 @@ class PromotionInfo:
     product_code: str
     discount_type: str  # rate / amount
     discount_value: int
-    members_only: bool
 
 
 def unit_discount(unit_price: int, promo: PromotionInfo) -> int:
@@ -63,9 +63,7 @@ def compute_quote(
     """DB に依存しない純粋な計算。items は (商品コード, 数量) の並び。"""
     is_member = member_id is not None
     best: dict[str, int] = {}
-    for p in promotions:
-        if p.members_only and not is_member:
-            continue
+    for p in promotions if is_member else []:  # 会員でなければ値引きなし
         prod = products.get(p.product_code)
         if prod is None:
             continue
@@ -153,7 +151,7 @@ class PricingService:
             if p.tax_class not in rate_rows:
                 raise ApiError(500, "TAX_RATE_NOT_FOUND", "税率が設定されていません")
         promos = [
-            PromotionInfo(p.product_code, p.discount_type, p.discount_value, p.members_only)
+            PromotionInfo(p.product_code, p.discount_type, p.discount_value)
             for p in self.promotions.active_for(codes, business_date())
         ]
         rates = {cls: Decimal(r.rate) for cls, r in rate_rows.items()}

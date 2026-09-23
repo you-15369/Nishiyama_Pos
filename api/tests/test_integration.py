@@ -111,9 +111,13 @@ def test_price_promotion_period(client, auth):  # ST-FR007-03 期間外は値引
     assert d["total_discount"] == 0
 
 
-def test_price_non_member_promotion_applies_to_all(client, auth):
-    d = price(client, auth, [{"product_code": "4901234567908", "quantity": 1}], None).json()["data"]
-    assert d["total_discount"] == 10
+def test_price_discount_is_member_only(client, auth):  # R-011 会員に限り値引き
+    items = [{"product_code": "4901234567900", "quantity": 1}, {"product_code": "4909999999900", "quantity": 1}]
+    guest = price(client, auth, items, None).json()["data"]
+    assert guest["total_discount"] == 0
+    member = price(client, auth, items, "M0001").json()["data"]
+    # 緑茶 20円引き（金額）＋ ティッシュ 398×10%=39.8→39（割合）
+    assert member["total_discount"] == 20 + 39
 
 
 # ---------- 取引確定 ----------

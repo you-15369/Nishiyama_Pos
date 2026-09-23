@@ -66,18 +66,16 @@ TAX_RATES = [
     ("reduced", "0.080", date(2019, 10, 1)),
 ]
 
-# (対象商品, 種別, 値, 開始, 終了, 会員限定)
+# (対象商品, 種別, 値, 開始, 終了)  ※値引きはすべて会員限定
 PROMOTIONS = [
     # テスト仕様書の代表企画（基準日 2026-09-05 に有効）
-    ("4901234567894", "rate", 10, date(2026, 9, 1), date(2026, 9, 30), True),
-    ("4900000000300", "amount", 500, date(2026, 9, 1), date(2026, 9, 30), True),
+    ("4901234567894", "rate", 10, date(2026, 9, 1), date(2026, 9, 30)),
+    ("4900000000300", "amount", 500, date(2026, 9, 1), date(2026, 9, 30)),
     # 期間外の企画（適用されない）
-    ("4901234567895", "amount", 20, date(2026, 8, 1), date(2026, 8, 31), True),
-    # 会員限定でない企画（会員なしでも適用）
-    ("4901234567908", "amount", 10, date(2026, 9, 1), date(2026, 9, 30), False),
-    # デモ用の長期企画（会員限定）
-    ("4901234567900", "amount", 20, date(2026, 1, 1), date(2027, 12, 31), True),
-    ("4909999999900", "rate", 10, date(2026, 1, 1), date(2027, 12, 31), True),
+    ("4901234567895", "amount", 20, date(2026, 8, 1), date(2026, 8, 31)),
+    # デモ用の長期企画
+    ("4901234567900", "amount", 20, date(2026, 1, 1), date(2027, 12, 31)),
+    ("4909999999900", "rate", 10, date(2026, 1, 1), date(2027, 12, 31)),
 ]
 
 
@@ -95,7 +93,7 @@ def seed(db: Session) -> None:
     for code, name, price, cls in PRODUCTS:
         db.add(Product(product_code=code, name=name, unit_price_ex_tax=price, tax_class=cls))
     db.flush()
-    for code, typ, val, start, end, members_only in PROMOTIONS:
+    for code, typ, val, start, end in PROMOTIONS:
         db.add(
             Promotion(
                 product_code=code,
@@ -103,7 +101,6 @@ def seed(db: Session) -> None:
                 discount_value=val,
                 start_date=start,
                 end_date=end,
-                members_only=members_only,
             )
         )
     db.commit()

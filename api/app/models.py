@@ -4,7 +4,6 @@ from decimal import Decimal
 
 from sqlalchemy import (
     BigInteger,
-    Boolean,
     CheckConstraint,
     Date,
     DateTime,
@@ -69,7 +68,6 @@ class Promotion(Base):
     discount_value: Mapped[int] = mapped_column(Integer, nullable=False)  # rate は % の整数、amount は円
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
     end_date: Mapped[date] = mapped_column(Date, nullable=False)
-    members_only: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
 class Transaction(Base):
